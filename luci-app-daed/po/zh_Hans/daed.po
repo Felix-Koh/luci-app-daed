@@ -16,6 +16,15 @@ msgstr "日志"
 msgid "Update"
 msgstr "更新"
 
+msgid "Open WebUI"
+msgstr "打开 WebUI"
+
+msgid "Open the DAED WebUI in a new tab."
+msgstr "在新标签页打开 DAED WebUI。"
+
+msgid "Unable to determine WebUI address from current settings."
+msgstr "无法从当前设置判断 WebUI 地址。"
+
 msgid "Check for new daed release packages and refresh Loyalsoldier geodata manually."
 msgstr "检查新的 daed 发布包，并手动更新 Loyalsoldier 的地理数据库。"
 
