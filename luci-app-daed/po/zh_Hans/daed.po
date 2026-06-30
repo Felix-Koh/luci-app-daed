@@ -4,14 +4,11 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "DAED"
 msgstr "DAED"
 
-msgid "DAE is a Linux high-performance transparent proxy solution based on eBPF, And DAED is a modern dashboard for dae."
-msgstr "DAE是一个基于eBPF的Linux高性能透明代理解决方案,而DAED是DAE的管理面板。"
+msgid "DAE is a Linux high-performance transparent proxy solution based on eBPF."
+msgstr "DAE 是一个基于 eBPF 的 Linux 高性能透明代理解决方案。"
 
 msgid "Base Setting"
 msgstr "基本设置"
-
-msgid "Dashboard"
-msgstr "仪表板"
 
 msgid "Logs"
 msgstr "日志"

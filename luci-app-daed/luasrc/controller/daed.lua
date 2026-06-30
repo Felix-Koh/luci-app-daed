@@ -11,9 +11,8 @@ function index()
 
 	entry({"admin",  "services", "daed"}, alias("admin", "services", "daed", "setting"),_("DAED"), 58).dependent = true
 	entry({"admin", "services", "daed", "setting"}, cbi("daed/basic"), _("Base Setting"), 1).leaf=true
-	entry({"admin",  "services", "daed", "daed"}, template("daed/daed"), _("Dashboard"), 2).leaf = true
-	entry({"admin", "services", "daed", "log"}, cbi("daed/log"), _("Logs"), 3).leaf = true
-	entry({"admin", "services", "daed", "update"}, template("daed/update"), _("Update"), 4).leaf = true
+	entry({"admin", "services", "daed", "log"}, cbi("daed/log"), _("Logs"), 2).leaf = true
+	entry({"admin", "services", "daed", "update"}, template("daed/update"), _("Update"), 3).leaf = true
 	entry({"admin", "services", "daed_status"}, call("act_status"))
 	entry({"admin", "services", "daed", "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", "daed", "clear_log"}, call("clear_log")).leaf = true

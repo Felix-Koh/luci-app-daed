@@ -2,7 +2,7 @@ local m, s ,o
 
 m = Map("daed")
 m.title = translate("DAED")
-m.description = translate("DAE is a Linux high-performance transparent proxy solution based on eBPF, And DAED is a modern dashboard for dae.")
+m.description = translate("DAE is a Linux high-performance transparent proxy solution based on eBPF.")
 
 m:section(SimpleSection).template = "daed/daed_status"
 
