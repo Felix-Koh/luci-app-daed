@@ -1,0 +1,103 @@
+<%+header%>
+
+<style type="text/css">
+  .daed-update-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; }
+  .daed-update-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px dashed #e5e7eb; }
+  .daed-update-row:first-of-type { border-top: none; }
+  .daed-update-name { font-weight: 600; min-width: 140px; }
+  .daed-update-meta { flex: 1; color: #6b7280; word-break: break-all; }
+  .daed-update-actions .btn { margin-left: 8px; }
+  .daed-update-log { width: 100%; min-height: 180px; margin-top: 16px; font-family: monospace; white-space: pre-wrap; }
+</style>
+
+<h2><%:Update%></h2>
+<div class="cbi-map-descr"><%:Check for new daed release packages and refresh Loyalsoldier geodata manually.%></div>
+
+<div class="daed-update-card">
+  <div id="update-rows">
+    <div class="daed-update-row">
+      <div class="daed-update-name">daed</div>
+      <div class="daed-update-meta" id="meta-daed"><%:Collecting data...%></div>
+      <div class="daed-update-actions">
+        <button class="cbi-button cbi-button-action" id="btn-daed" onclick="return daedRunUpdate('daed');"><%:Update%></button>
+      </div>
+    </div>
+    <div class="daed-update-row">
+      <div class="daed-update-name">GeoIP</div>
+      <div class="daed-update-meta" id="meta-geoip"><%:Collecting data...%></div>
+      <div class="daed-update-actions">
+        <button class="cbi-button cbi-button-action" id="btn-geoip" onclick="return daedRunUpdate('geoip');"><%:Update%></button>
+      </div>
+    </div>
+    <div class="daed-update-row">
+      <div class="daed-update-name">GeoSite</div>
+      <div class="daed-update-meta" id="meta-geosite"><%:Collecting data...%></div>
+      <div class="daed-update-actions">
+        <button class="cbi-button cbi-button-action" id="btn-geosite" onclick="return daedRunUpdate('geosite');"><%:Update%></button>
+      </div>
+    </div>
+  </div>
+
+  <textarea id="update-log" class="daed-update-log cbi-input-textarea" readonly="readonly"></textarea>
+</div>
+
+<script type="text/javascript">
+  const infoUrl = '<%=url([[admin]], [[services]], [[daed]], [[update_info]])%>';
+  const actionUrl = '<%=url([[admin]], [[services]], [[daed]], [[run_update]])%>';
+
+  function daedSetLog(text) {
+    document.getElementById('update-log').value = text || '';
+  }
+
+  function daedSetMeta(id, text) {
+    document.getElementById('meta-' + id).textContent = text;
+  }
+
+  function daedFetchInfo() {
+    XHR.get(infoUrl, null, function(x, data) {
+      if (!data) return;
+
+      if (data.daed) {
+        var daedMeta = '<%:Installed%>: ' + (data.daed.installed || '<%:Not installed%>');
+        if (data.daed.latest)
+          daedMeta += ' · <%:Latest%>: ' + data.daed.latest;
+        if (data.daed.asset)
+          daedMeta += ' · ' + data.daed.asset;
+        daedSetMeta('daed', daedMeta);
+      }
+
+      if (data.geoip)
+        daedSetMeta('geoip', data.geoip.exists ? (data.geoip.size + ' · ' + data.geoip.mtime) : '<%:Missing, click Update to fetch%>');
+      if (data.geosite)
+        daedSetMeta('geosite', data.geosite.exists ? (data.geosite.size + ' · ' + data.geosite.mtime) : '<%:Missing, click Update to fetch%>');
+    });
+  }
+
+  function daedRunUpdate(task) {
+    var btn = document.getElementById('btn-' + task);
+    var oldText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = '...';
+    daedSetLog('<%:Running update...%>');
+
+    XHR.get(actionUrl, { task: task }, function(x, data) {
+      if (!data) {
+        daedSetLog('<%:Update failed%>');
+      } else {
+        daedSetLog((data.ok ? '[OK] ' : '[FAIL] ') + (data.message || ''));
+      }
+      btn.disabled = false;
+      btn.innerText = oldText;
+      daedFetchInfo();
+    });
+    return false;
+  }
+
+  daedFetchInfo();
+  XHR.poll(10, infoUrl, null, function(x, data) {
+    if (!data) return;
+    daedFetchInfo();
+  });
+</script>
+
+<%+footer%>

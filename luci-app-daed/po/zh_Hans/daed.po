@@ -16,6 +16,30 @@ msgstr "仪表板"
 msgid "Logs"
 msgstr "日志"
 
+msgid "Update"
+msgstr "更新"
+
+msgid "Check for new daed release packages and refresh Loyalsoldier geodata manually."
+msgstr "检查新的 daed 发布包，并手动更新 Loyalsoldier 的地理数据库。"
+
+msgid "Installed"
+msgstr "已安装"
+
+msgid "Latest"
+msgstr "最新"
+
+msgid "Not installed"
+msgstr "未安装"
+
+msgid "Missing, click Update to fetch"
+msgstr "文件缺失，点击更新下载"
+
+msgid "Running update..."
+msgstr "正在执行更新..."
+
+msgid "Update failed"
+msgstr "更新失败"
+
 msgid "Clear logs"
 msgstr "清空日志"
 
