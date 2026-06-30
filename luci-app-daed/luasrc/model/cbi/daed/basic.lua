@@ -28,9 +28,21 @@ o.placeholder = translate("Leave empty to use listen port")
 o.datatype = "range(1,65535)"
 o.description = translate("For reverse proxy scenarios, leave empty to use the port from listen address")
 
+o = s:option(Flag, "geo_auto_update", translate("Enable Auto Geo Update"))
+o.default = 0
+
+o = s:option(ListValue, "geo_update_hour", translate("Geo Update Hour"))
+for hour = 0, 23 do
+	local value = string.format("%02d", hour)
+	o:value(value, value .. ":00")
+end
+o.default = "04"
+o:depends("geo_auto_update", "1")
+
 m.apply_on_parse = true
 m.on_after_apply = function(self,map)
 	luci.sys.exec("/etc/init.d/daed restart")
+	luci.sys.exec("/etc/init.d/luci_daed restart >/dev/null 2>&1")
 end
 
 return m

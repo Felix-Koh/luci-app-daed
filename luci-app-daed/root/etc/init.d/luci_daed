@@ -11,19 +11,24 @@ RESOLV_DAED="/tmp/resolv.conf.daed"
 
 update_cron() {
   local temp_cron="/tmp/root.cron"
+  local tag="# luci-app-daed geo-update"
+  local script="/usr/share/luci-app-daed/update-geo.sh"
 
   if [ -f /etc/crontabs/root ]; then
-    grep -v '/etc/daed/daed_sub.sh' /etc/crontabs/root > "$temp_cron" 2>/dev/null
+    grep -vF -e "$tag" -e "$script" /etc/crontabs/root > "$temp_cron" 2>/dev/null
   fi
   : >> "$temp_cron"
 
   local auto_update
-  auto_update=$(uci -q get daed.config.subscribe_auto_update)
+  auto_update=$(uci -q get daed.config.geo_auto_update)
   if [ "$1" = "add" ] && [ "${auto_update:-0}" -eq 1 ]; then
     local min=$((RANDOM % 60))
-    local hr=$(uci -q get daed.config.subscribe_update_day_time)
-    local wk=$(uci -q get daed.config.subscribe_update_week_time)
-    echo "$min ${hr:-*} * * ${wk:-*} /etc/daed/daed_sub.sh >/dev/null 2>&1" >> "$temp_cron"
+    local hr
+    hr=$(uci -q get daed.config.geo_update_hour)
+    {
+      echo "$tag"
+      echo "$min ${hr:-4} * * * $script all >/dev/null 2>&1"
+    } >> "$temp_cron"
   fi
 
   crontab "$temp_cron" 2>/dev/null

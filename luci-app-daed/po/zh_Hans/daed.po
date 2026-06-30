@@ -76,6 +76,12 @@ msgstr "留空则使用监听端口"
 msgid "For reverse proxy scenarios, leave empty to use the port from listen address"
 msgstr "用于反向代理场景,留空则使用监听地址的端口"
 
+msgid "Enable Auto Geo Update"
+msgstr "启用 Geo 自动更新"
+
+msgid "Geo Update Hour"
+msgstr "Geo 更新时间"
+
 msgid "DAED is not running"
 msgstr "DAED 未运行"
 
