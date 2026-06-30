@@ -2,11 +2,13 @@
 
 <style type="text/css">
   .daed-update-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; }
-  .daed-update-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px dashed #e5e7eb; }
+  .daed-update-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px dashed #e5e7eb; }
   .daed-update-row:first-of-type { border-top: none; }
-  .daed-update-name { font-weight: 600; min-width: 140px; }
-  .daed-update-meta { flex: 1; color: #6b7280; word-break: break-all; }
-  .daed-update-actions .btn { margin-left: 8px; }
+  .daed-update-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+  .daed-update-name { font-weight: 600; line-height: 1.3; }
+  .daed-update-meta { color: #6b7280; word-break: break-all; line-height: 1.4; }
+  .daed-update-actions { flex-shrink: 0; }
+  .daed-update-actions .cbi-button { min-width: 84px; }
   .daed-update-log { width: 100%; min-height: 180px; margin-top: 16px; font-family: monospace; white-space: pre-wrap; }
 </style>
 
@@ -16,22 +18,28 @@
 <div class="daed-update-card">
   <div id="update-rows">
     <div class="daed-update-row">
-      <div class="daed-update-name">daed</div>
-      <div class="daed-update-meta" id="meta-daed"><%:Collecting data...%></div>
+      <div class="daed-update-main">
+        <div class="daed-update-name">daed</div>
+        <div class="daed-update-meta" id="meta-daed"><%:Collecting data...%></div>
+      </div>
       <div class="daed-update-actions">
         <button class="cbi-button cbi-button-action" id="btn-daed" onclick="return daedRunUpdate('daed');"><%:Update%></button>
       </div>
     </div>
     <div class="daed-update-row">
-      <div class="daed-update-name">GeoIP</div>
-      <div class="daed-update-meta" id="meta-geoip"><%:Collecting data...%></div>
+      <div class="daed-update-main">
+        <div class="daed-update-name">GeoIP</div>
+        <div class="daed-update-meta" id="meta-geoip"><%:Collecting data...%></div>
+      </div>
       <div class="daed-update-actions">
         <button class="cbi-button cbi-button-action" id="btn-geoip" onclick="return daedRunUpdate('geoip');"><%:Update%></button>
       </div>
     </div>
     <div class="daed-update-row">
-      <div class="daed-update-name">GeoSite</div>
-      <div class="daed-update-meta" id="meta-geosite"><%:Collecting data...%></div>
+      <div class="daed-update-main">
+        <div class="daed-update-name">GeoSite</div>
+        <div class="daed-update-meta" id="meta-geosite"><%:Collecting data...%></div>
+      </div>
       <div class="daed-update-actions">
         <button class="cbi-button cbi-button-action" id="btn-geosite" onclick="return daedRunUpdate('geosite');"><%:Update%></button>
       </div>
@@ -51,6 +59,13 @@
 
   function daedSetMeta(id, text) {
     document.getElementById('meta-' + id).textContent = text;
+  }
+
+  function daedTaskLabel(task) {
+    if (task === 'daed') return 'daed';
+    if (task === 'geoip') return 'GeoIP';
+    if (task === 'geosite') return 'GeoSite';
+    return task;
   }
 
   function daedFetchInfo() {
@@ -74,6 +89,9 @@
   }
 
   function daedRunUpdate(task) {
+    if (!window.confirm('<%:Are you sure you want to update%> ' + daedTaskLabel(task) + '?'))
+      return false;
+
     var btn = document.getElementById('btn-' + task);
     var oldText = btn.innerText;
     btn.disabled = true;

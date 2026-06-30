@@ -46,6 +46,9 @@ msgstr "正在执行更新..."
 msgid "Update failed"
 msgstr "更新失败"
 
+msgid "Are you sure you want to update"
+msgstr "确认现在更新"
+
 msgid "Clear logs"
 msgstr "清空日志"
 
