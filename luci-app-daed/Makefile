@@ -5,7 +5,7 @@ PKG_VERSION:=1.4
 PKG_RELEASE:=2
 
 LUCI_TITLE:=LuCI Support for DAED
-LUCI_DEPENDS:=+daed +zoneinfo-asia +luci-compat +uclient-fetch
+LUCI_DEPENDS:=+zoneinfo-asia +luci-compat +uclient-fetch
 LUCI_PKGARCH:=all
 
 define Package/$(PKG_NAME)/conffiles
