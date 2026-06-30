@@ -25,16 +25,17 @@ download_one() {
 
 	target="${BASE_DIR}/${kind}.dat"
 	tmp_file="/tmp/${kind}.dat"
+	stage_file="${tmp_file}.new"
 
 	if command -v curl >/dev/null 2>&1; then
-		curl -fL "$url" -o "$tmp_file"
+		curl -fsSL "$url" -o "$stage_file"
 	elif command -v wget >/dev/null 2>&1; then
-		wget -O "$tmp_file" "$url"
+		wget -qO "$stage_file" "$url"
 	else
-		uclient-fetch -qO "$tmp_file" "$url"
+		uclient-fetch -qO "$stage_file" "$url"
 	fi
 
-	[ -s "$tmp_file" ] || {
+	[ -s "$stage_file" ] || {
 		echo "Downloaded file is empty: $kind"
 		exit 1
 	}
@@ -43,7 +44,8 @@ download_one() {
 		cp "$target" "$BASE_DIR/backup/${kind}.dat.${STAMP}"
 	fi
 
-	install -m 0644 "$tmp_file" "$target"
+	mv "$stage_file" "$target"
+	chmod 0644 "$target"
 	UPDATED="${UPDATED}${kind} "
 	echo "Updated ${kind} at ${target}"
 }
