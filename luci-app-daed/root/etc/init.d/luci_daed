@@ -22,12 +22,11 @@ update_cron() {
   local auto_update
   auto_update=$(uci -q get daed.config.geo_auto_update)
   if [ "$1" = "add" ] && [ "${auto_update:-0}" -eq 1 ]; then
-    local min=$((RANDOM % 60))
     local hr
     hr=$(uci -q get daed.config.geo_update_hour)
     {
       echo "$tag"
-      echo "$min ${hr:-4} * * * $script all >/dev/null 2>&1"
+      echo "0 ${hr:-4} * * * $script all >/dev/null 2>&1"
     } >> "$temp_cron"
   fi
 
