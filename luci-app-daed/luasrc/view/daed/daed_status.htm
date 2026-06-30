@@ -1,7 +1,47 @@
+<%
+	local uci = require("luci.model.uci").cursor()
+	local listen_addr = uci:get_first("daed", "daed", "listen_addr") or ""
+	local dashboard_port = uci:get_first("daed", "daed", "dashboard_port") or ""
+%>
 <script type="text/javascript">//<![CDATA[
+	function daedResolveWebUIUrl() {
+		var listenAddr = "<%=listen_addr%>";
+		var dashboardPort = "<%=dashboard_port%>";
+		var port = "";
+
+		if (dashboardPort && dashboardPort.trim() !== "") {
+			port = dashboardPort.trim();
+		} else {
+			var match = listenAddr.match(/:(\d+)/);
+			if (match && match[1])
+				port = match[1];
+		}
+
+		if (!port)
+			return "";
+
+		var protocol = window.location.protocol;
+		var hostname = window.location.hostname;
+		var url = protocol + "//" + hostname;
+
+		if (!((protocol === "http:" && port === "80") || (protocol === "https:" && port === "443")))
+			url += ":" + port;
+
+		return url;
+	}
+
+	function daedOpenWebUI() {
+		var url = daedResolveWebUIUrl();
+		if (!url)
+			return false;
+
+		window.open(url, "_blank", "noopener");
+		return false;
+	}
+
 	XHR.poll(3, '<%=url([[admin]], [[services]], [[daed_status]])%>', null,
 		function(x, data) {
-			var tb = document.getElementById('daed_status');
+			var tb = document.getElementById('daed_status_text');
 			if (data && tb)
 			{
 				if (data.running)
@@ -16,9 +56,29 @@
 		}
 	);
 //]]></script>
-<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<style type="text/css">
+	.daed-status-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.daed-status-actions {
+		flex-shrink: 0;
+	}
+
+	.cbi-section:last-of-type .cbi-section-node {
+		padding-bottom: 24px;
+	}
+</style>
 <fieldset class="cbi-section">
-	<p id="daed_status">
-		<em><%:Collecting data...%></em>
-	</p>
+	<div class="daed-status-bar">
+		<p id="daed_status_text">
+			<em><%:Collecting data...%></em>
+		</p>
+		<div class="daed-status-actions">
+			<button class="cbi-button cbi-button-action" type="button" onclick="return daedOpenWebUI();"><%:Open WebUI%></button>
+		</div>
+	</div>
 </fieldset>
