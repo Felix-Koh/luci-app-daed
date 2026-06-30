@@ -28,17 +28,20 @@ jobs:
         id: meta
         shell: bash
         run: |
-          pkg_version=$(grep '^PKG_VERSION:=' daed/Makefile | head -n 1 | cut -d= -f2)
-          pkg_release=$(grep '^PKG_RELEASE:=' daed/Makefile | head -n 1 | cut -d= -f2)
+          pkg_name=$(grep '^PKG_NAME:=' luci-app-daed/Makefile | head -n 1 | cut -d= -f2)
+          pkg_version=$(grep '^PKG_VERSION:=' luci-app-daed/Makefile | head -n 1 | cut -d= -f2)
+          pkg_release=$(grep '^PKG_RELEASE:=' luci-app-daed/Makefile | head -n 1 | cut -d= -f2)
 
           version="${pkg_version}-r${pkg_release}"
-          release_tag="daed_${version}"
-          release_name="daed_${version}"
+          release_tag="${pkg_name}_${version}"
+          release_name="${pkg_name}_${version}"
 
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "pkg_name=${pkg_name}" >> "$GITHUB_OUTPUT"
           echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
           echo "release_name=${release_name}" >> "$GITHUB_OUTPUT"
 
+          echo "Package: ${pkg_name}"
           echo "Version: ${version}"
           echo "Release tag: ${release_tag}"
 
