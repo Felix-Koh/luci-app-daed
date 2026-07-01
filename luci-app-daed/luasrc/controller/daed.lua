@@ -15,6 +15,8 @@ function index()
 	entry({"admin", "services", "daed", "update"}, template("daed/update"), _("Update"), 3).leaf = true
 	entry({"admin", "services", "daed_status"}, call("act_status"))
 	entry({"admin", "services", "daed", "get_log"}, call("get_log")).leaf = true
+	entry({"admin", "services", "daed", "log_meta"}, call("log_meta")).leaf = true
+	entry({"admin", "services", "daed", "download_log"}, call("download_log")).leaf = true
 	entry({"admin", "services", "daed", "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", "daed", "update_info"}, call("update_info")).leaf = true
 	entry({"admin", "services", "daed", "run_update"}, call("run_update")).leaf = true
@@ -30,6 +32,25 @@ end
 
 function get_log()
 	http.write(sys.exec("cat /var/log/daed/daed.log"))
+end
+
+function log_meta()
+	local path = "/var/log/daed/daed.log"
+	local st = nixio.fs.stat(path)
+	local size = st and st.size or 0
+
+	http.prepare_content("application/json")
+	http.write_json({
+		size = size,
+		running = sys.call("pidof daed >/dev/null") == 0
+	})
+end
+
+function download_log()
+	local path = "/var/log/daed/daed.log"
+	http.header('Content-Disposition', 'attachment; filename="daed.log"')
+	http.prepare_content("text/plain; charset=utf-8")
+	http.write(sys.exec("cat " .. path))
 end
 
 function clear_log()

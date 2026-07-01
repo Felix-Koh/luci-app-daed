@@ -1,33 +1,296 @@
 <script type="text/javascript">
-	//<![CDATA[
-	function clear_log(btn) {
-		XHR.get('<%=url([[admin]], [[services]], [[daed]], [[clear_log]])%>', null,
-			function(x, data) {
-				if(x && x.status == 200) {
-					var log_textarea = document.getElementById('log_textarea');
-					log_textarea.innerHTML = "";
-					log_textarea.scrollTop = log_textarea.scrollHeight;
-				}
-				location.reload();
-			}
-		);
+//<![CDATA[
+	var daedLogState = {
+		autoScroll: true,
+		paused: false,
+		level: 'ALL',
+		rawText: ''
+	};
+
+	var logUrl = '<%=url([[admin]], [[services]], [[daed]], [[get_log]])%>';
+	var metaUrl = '<%=url([[admin]], [[services]], [[daed]], [[log_meta]])%>';
+	var clearUrl = '<%=url([[admin]], [[services]], [[daed]], [[clear_log]])%>';
+	var downloadUrl = '<%=url([[admin]], [[services]], [[daed]], [[download_log]])%>';
+
+	function daedFormatBytes(bytes) {
+		if (!bytes || bytes < 1024)
+			return (bytes || 0) + ' B';
+		if (bytes < 1024 * 1024)
+			return (bytes / 1024).toFixed(1) + ' KB';
+		return (bytes / 1024 / 1024).toFixed(1) + ' MB';
 	}
-	var scrolled = false;
-	XHR.poll(2, '<%=url([[admin]], [[services]], [[daed]], [[get_log]])%>', null,
-		function(x, data) {
-			if(x && x.status == 200) {
-				var log_textarea = document.getElementById('log_textarea');
-				log_textarea.innerHTML = x.responseText;
-				if (!scrolled) {
-					log_textarea.scrollTop = log_textarea.scrollHeight;
-					scrolled = true;
-				}
-			}
+
+	function daedEscapeHtml(text) {
+		return String(text || '')
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	function daedDetectLevel(line) {
+		if (/\bERROR\b/.test(line)) return 'ERROR';
+		if (/\bWARN\b/.test(line)) return 'WARN';
+		if (/\bINFO\b/.test(line)) return 'INFO';
+		return 'OTHER';
+	}
+
+	function daedApplyLevelFilter(lines) {
+		if (daedLogState.level === 'ALL')
+			return lines;
+
+		return lines.filter(function(line) {
+			return daedDetectLevel(line) === daedLogState.level;
+		});
+	}
+
+	function daedRenderLogs() {
+		var logPanel = document.getElementById('log_panel');
+		var lines = daedLogState.rawText.split(/\r?\n/).filter(function(line) {
+			return line.length > 0;
+		});
+		lines = daedApplyLevelFilter(lines);
+
+		var html = lines.map(function(line) {
+			var level = daedDetectLevel(line);
+			return '<div class="daed-log-line level-' + level.toLowerCase() + '">' +
+				daedEscapeHtml(line) + '</div>';
+		}).join('');
+
+		if (!html)
+			html = '<div class="daed-log-empty"><%:No log entries%></div>';
+
+		logPanel.innerHTML = html;
+
+		if (daedLogState.autoScroll) {
+			logPanel.scrollTop = logPanel.scrollHeight;
 		}
-	);
-	//]]>
+	}
+
+	function daedRefreshMeta() {
+		XHR.get(metaUrl, null, function(x, data) {
+			if (!data)
+				return;
+
+			document.getElementById('log_size').textContent = daedFormatBytes(data.size || 0);
+			document.getElementById('log_live').textContent = daedLogState.paused ? 'paused' : (data.running ? 'live' : 'stopped');
+		});
+	}
+
+	function daedFetchLogs() {
+		if (daedLogState.paused)
+			return;
+
+		XHR.get(logUrl, null, function(x) {
+			if (x && x.status == 200) {
+				daedLogState.rawText = x.responseText || '';
+				daedRenderLogs();
+			}
+		});
+		daedRefreshMeta();
+	}
+
+	function daedToggleAutoScroll(el) {
+		daedLogState.autoScroll = !!el.checked;
+		if (daedLogState.autoScroll) {
+			var logPanel = document.getElementById('log_panel');
+			logPanel.scrollTop = logPanel.scrollHeight;
+		}
+	}
+
+	function daedTogglePause(el) {
+		daedLogState.paused = !!el.checked;
+		daedRefreshMeta();
+		if (!daedLogState.paused)
+			daedFetchLogs();
+	}
+
+	function daedChangeLevel(el) {
+		daedLogState.level = el.value || 'ALL';
+		daedRenderLogs();
+	}
+
+	function daedClearDisplay() {
+		daedLogState.rawText = '';
+		daedRenderLogs();
+	}
+
+	function daedDownloadLog() {
+		window.open(downloadUrl, '_blank');
+		return false;
+	}
+
+	function daedClearLog() {
+		if (!window.confirm('<%:Are you sure you want to clear the log file?%>'))
+			return false;
+
+		XHR.get(clearUrl, null, function(x) {
+			if (x && x.status == 200) {
+				daedLogState.rawText = '';
+				daedRenderLogs();
+				daedRefreshMeta();
+			}
+		});
+		return false;
+	}
+
+	XHR.poll(3, logUrl, null, function(x) {
+		if (daedLogState.paused)
+			return;
+
+		if (x && x.status == 200) {
+			daedLogState.rawText = x.responseText || '';
+			daedRenderLogs();
+		}
+	});
+
+	XHR.poll(3, metaUrl, null, function(x, data) {
+		if (!data)
+			return;
+
+		document.getElementById('log_size').textContent = daedFormatBytes(data.size || 0);
+		document.getElementById('log_live').textContent = daedLogState.paused ? 'paused' : (data.running ? 'live' : 'stopped');
+	});
+
+	window.setTimeout(function() {
+		daedFetchLogs();
+	}, 50);
+//]]>
 </script>
+
+<style type="text/css">
+	.daed-log-shell {
+		border-radius: 8px;
+		background: #1f232a;
+		color: #d7dde8;
+		padding: 16px;
+		border: 1px solid rgba(148, 163, 184, 0.15);
+	}
+
+	.daed-log-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 14px;
+	}
+
+	.daed-log-title {
+		font-size: 15px;
+		font-weight: 600;
+		color: #eef2ff;
+	}
+
+	.daed-log-meta {
+		font-family: monospace;
+		color: #94a3b8;
+	}
+
+	.daed-log-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		flex-wrap: wrap;
+		margin-bottom: 14px;
+	}
+
+	.daed-log-controls,
+	.daed-log-actions {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex-wrap: wrap;
+	}
+
+	.daed-log-check {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: #cbd5e1;
+	}
+
+	.daed-log-select {
+		min-width: 120px;
+		background: #252b33 !important;
+		color: #e5e7eb !important;
+		border-color: rgba(148, 163, 184, 0.22) !important;
+	}
+
+	.daed-log-shell .cbi-button {
+		margin: 0;
+	}
+
+	.daed-log-panel {
+		height: 640px;
+		overflow: auto;
+		background: #161b22;
+		border-radius: 8px;
+		padding: 14px 16px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+		font-size: 13px;
+		line-height: 1.6;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	.daed-log-line {
+		margin: 0;
+		color: #cbd5e1;
+	}
+
+	.daed-log-line.level-info {
+		color: #c9f7e8;
+	}
+
+	.daed-log-line.level-warn {
+		color: #f6c85f;
+	}
+
+	.daed-log-line.level-error {
+		color: #fda4af;
+	}
+
+	.daed-log-empty {
+		color: #94a3b8;
+	}
+</style>
+
 <fieldset class="cbi-section" id="_log_fieldset">
-	<input class="cbi-button cbi-input-remove" type="button" onclick="clear_log()" value="<%:Clear logs%>" style="margin-left: 10px; margin-top: 10px;">
-	<textarea id="log_textarea" class="cbi-input-textarea" style="width: calc(100% - 20px); height: 645px; margin: 10px;" data-update="change" rows="5" wrap="off" readonly="readonly"></textarea>
+	<div class="daed-log-shell">
+		<div class="daed-log-head">
+			<div class="daed-log-title"><%:DAED Live Logs%></div>
+			<div class="daed-log-meta"><span id="log_size">0 B</span> · <span id="log_live">live</span></div>
+		</div>
+
+		<div class="daed-log-toolbar">
+			<div class="daed-log-controls">
+				<label class="daed-log-check">
+					<input type="checkbox" checked="checked" onchange="daedToggleAutoScroll(this)">
+					<span><%:Auto scroll%></span>
+				</label>
+				<label class="daed-log-check">
+					<input type="checkbox" onchange="daedTogglePause(this)">
+					<span><%:Pause%></span>
+				</label>
+				<select class="cbi-input-select daed-log-select" onchange="daedChangeLevel(this)">
+					<option value="ALL"><%:All%></option>
+					<option value="INFO">INFO</option>
+					<option value="WARN">WARN</option>
+					<option value="ERROR">ERROR</option>
+				</select>
+			</div>
+
+			<div class="daed-log-actions">
+				<button class="cbi-button" type="button" onclick="daedClearDisplay()"><%:Clear display%></button>
+				<button class="cbi-button" type="button" onclick="return daedDownloadLog()"><%:Download%></button>
+				<button class="cbi-button cbi-button-remove" type="button" onclick="return daedClearLog()"><%:Clear logs%></button>
+			</div>
+		</div>
+
+		<div id="log_panel" class="daed-log-panel">
+			<div class="daed-log-empty"><%:Collecting data...%></div>
+		</div>
+	</div>
 </fieldset>
