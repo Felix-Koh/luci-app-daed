@@ -30,9 +30,9 @@
 	}
 
 	function daedDetectLevel(line) {
-		if (/\bERROR\b/.test(line)) return 'ERROR';
-		if (/\bWARN\b/.test(line)) return 'WARN';
-		if (/\bINFO\b/.test(line)) return 'INFO';
+		var match = String(line || '').match(/\b(INFO|WARN|ERROR)\b/);
+		if (match && match[1])
+			return match[1];
 		return 'OTHER';
 	}
 
@@ -54,8 +54,14 @@
 
 		var html = lines.map(function(line) {
 			var level = daedDetectLevel(line);
-			return '<div class="daed-log-line level-' + level.toLowerCase() + '">' +
-				daedEscapeHtml(line) + '</div>';
+			var escaped = daedEscapeHtml(line);
+			if (level !== 'OTHER') {
+				escaped = escaped.replace(
+					new RegExp('\\b' + level + '\\b'),
+					'<span class="daed-log-level level-' + level.toLowerCase() + '">' + level + '</span>'
+				);
+			}
+			return '<div class="daed-log-line">' + escaped + '</div>';
 		}).join('');
 
 		if (!html)
@@ -114,6 +120,7 @@
 	function daedClearDisplay() {
 		daedLogState.rawText = '';
 		daedRenderLogs();
+		document.getElementById('log_size').textContent = '0 B';
 	}
 
 	function daedDownloadLog() {
@@ -162,10 +169,10 @@
 <style type="text/css">
 	.daed-log-shell {
 		border-radius: 8px;
-		background: #1f232a;
-		color: #d7dde8;
+		background: transparent;
+		color: inherit;
 		padding: 16px;
-		border: 1px solid rgba(148, 163, 184, 0.15);
+		border: 1px solid rgba(127, 127, 127, 0.18);
 	}
 
 	.daed-log-head {
@@ -179,12 +186,12 @@
 	.daed-log-title {
 		font-size: 15px;
 		font-weight: 600;
-		color: #eef2ff;
+		color: inherit;
 	}
 
 	.daed-log-meta {
 		font-family: monospace;
-		color: #94a3b8;
+		opacity: 0.75;
 	}
 
 	.daed-log-toolbar {
@@ -208,14 +215,11 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		color: #cbd5e1;
+		color: inherit;
 	}
 
 	.daed-log-select {
 		min-width: 120px;
-		background: #252b33 !important;
-		color: #e5e7eb !important;
-		border-color: rgba(148, 163, 184, 0.22) !important;
 	}
 
 	.daed-log-shell .cbi-button {
@@ -225,8 +229,9 @@
 	.daed-log-panel {
 		height: 640px;
 		overflow: auto;
-		background: #161b22;
+		background: rgba(127, 127, 127, 0.08);
 		border-radius: 8px;
+		border: 1px solid rgba(127, 127, 127, 0.14);
 		padding: 14px 16px;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 		font-size: 13px;
@@ -237,23 +242,31 @@
 
 	.daed-log-line {
 		margin: 0;
-		color: #cbd5e1;
+		color: inherit;
 	}
 
-	.daed-log-line.level-info {
-		color: #c9f7e8;
+	.daed-log-level {
+		display: inline-block;
+		min-width: 42px;
+		margin: 0 6px;
+		font-weight: 700;
+		letter-spacing: 0;
 	}
 
-	.daed-log-line.level-warn {
-		color: #f6c85f;
+	.daed-log-level.level-info {
+		color: #16a34a;
 	}
 
-	.daed-log-line.level-error {
-		color: #fda4af;
+	.daed-log-level.level-warn {
+		color: #d97706;
+	}
+
+	.daed-log-level.level-error {
+		color: #dc2626;
 	}
 
 	.daed-log-empty {
-		color: #94a3b8;
+		opacity: 0.7;
 	}
 </style>
 
