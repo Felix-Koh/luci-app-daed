@@ -39,6 +39,24 @@
 		return false;
 	}
 
+	function daedRestartCore(button) {
+		var statusEl = document.getElementById('daed_restart_status');
+		button.disabled = true;
+		if (statusEl)
+			statusEl.textContent = '<%:Restarting...%>';
+
+		XHR.get('<%=url([[admin]], [[services]], [[daed]], [[restart_core]])%>', null, function(x, data) {
+			button.disabled = false;
+			if (!statusEl)
+				return;
+
+			if (x && x.status == 200 && data && data.ok)
+				statusEl.textContent = '<%:Restart completed%>';
+			else
+				statusEl.textContent = '<%:Restart failed%>';
+		});
+	}
+
 	XHR.poll(3, '<%=url([[admin]], [[services]], [[daed_status]])%>', null,
 		function(x, data) {
 			var tb = document.getElementById('daed_status_text');
@@ -65,11 +83,19 @@
 	}
 
 	.daed-status-actions {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 		flex-shrink: 0;
 	}
 
 	.daed-status-bar p {
 		margin: 0;
+	}
+
+	.daed-status-note {
+		font-size: 12px;
+		opacity: 0.75;
 	}
 
 	.cbi-section:last-of-type .cbi-section-node {
@@ -83,6 +109,8 @@
 		</p>
 		<div class="daed-status-actions">
 			<button class="cbi-button cbi-button-action" type="button" onclick="return daedOpenWebUI();"><%:Open WebUI%></button>
+			<button class="cbi-button cbi-button-action" type="button" onclick="daedRestartCore(this)"><%:Restart Core%></button>
+			<span id="daed_restart_status" class="daed-status-note"></span>
 		</div>
 	</div>
 </fieldset>
