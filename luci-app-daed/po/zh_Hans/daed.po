@@ -31,6 +31,15 @@ msgstr "检查新的 daed 发布包，并手动更新 Loyalsoldier 的地理数�
 msgid "DAED Live Logs"
 msgstr "DAED 实时日志"
 
+msgid "Time"
+msgstr "时间"
+
+msgid "Level"
+msgstr "等级"
+
+msgid "Content"
+msgstr "内容"
+
 msgid "Installed"
 msgstr "已安装"
 

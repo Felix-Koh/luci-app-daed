@@ -30,10 +30,50 @@
 	}
 
 	function daedDetectLevel(line) {
-		var match = String(line || '').match(/\b(INFO|WARN|ERROR)\b/);
-		if (match && match[1])
-			return match[1];
+		var parsed = daedParseLine(line);
+		if (parsed.level)
+			return parsed.level;
 		return 'OTHER';
+	}
+
+	function daedParseLine(line) {
+		var text = String(line || '');
+		var parsed = {
+			time: '',
+			level: '',
+			content: text
+		};
+
+		var m = text.match(/time="([^"]+)"\s+level=([a-zA-Z]+)\s+msg="([^"]*)"\s*(.*)$/);
+		if (m) {
+			parsed.time = m[1] || '';
+			parsed.level = (m[2] || '').toUpperCase();
+			parsed.content = m[3] || '';
+			if (m[4] && m[4].trim() !== '')
+				parsed.content += '  ' + m[4].trim();
+			return parsed;
+		}
+
+		m = text.match(/^(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/);
+		if (m) {
+			parsed.time = m[1] || '';
+			parsed.level = (m[2] || '').toUpperCase();
+			parsed.content = m[3] || '';
+			return parsed;
+		}
+
+		m = text.match(/\blevel=([a-zA-Z]+)\b/);
+		if (m) {
+			parsed.level = (m[1] || '').toUpperCase();
+			parsed.content = text.replace(/\btime="[^"]+"\s*/, '').replace(/\blevel=[a-zA-Z]+\s*/, '').trim();
+			return parsed;
+		}
+
+		m = text.match(/\b(INFO|WARN|ERROR)\b/);
+		if (m)
+			parsed.level = m[1].toUpperCase();
+
+		return parsed;
 	}
 
 	function daedApplyLevelFilter(lines) {
@@ -52,20 +92,32 @@
 		});
 		lines = daedApplyLevelFilter(lines);
 
+		var header = '' +
+			'<div class="daed-log-table-head">' +
+				'<div class="daed-log-col-time"><%:Time%></div>' +
+				'<div class="daed-log-col-level"><%:Level%></div>' +
+				'<div class="daed-log-col-content"><%:Content%></div>' +
+			'</div>';
+
 		var html = lines.map(function(line) {
-			var level = daedDetectLevel(line);
-			var escaped = daedEscapeHtml(line);
-			if (level !== 'OTHER') {
-				escaped = escaped.replace(
-					new RegExp('\\b' + level + '\\b'),
-					'<span class="daed-log-level level-' + level.toLowerCase() + '">' + level + '</span>'
-				);
-			}
-			return '<div class="daed-log-line">' + escaped + '</div>';
+			var parsed = daedParseLine(line);
+			var level = parsed.level || 'OTHER';
+			var timeText = parsed.time ? daedEscapeHtml(parsed.time) : '-';
+			var levelText = level === 'OTHER' ? '-' : daedEscapeHtml(level);
+			var contentText = daedEscapeHtml(parsed.content || line);
+
+			return '' +
+				'<div class="daed-log-row">' +
+					'<div class="daed-log-col-time">' + timeText + '</div>' +
+					'<div class="daed-log-col-level"><span class="daed-log-level level-' + level.toLowerCase() + '">' + levelText + '</span></div>' +
+					'<div class="daed-log-col-content">' + contentText + '</div>' +
+				'</div>';
 		}).join('');
 
 		if (!html)
 			html = '<div class="daed-log-empty"><%:No log entries%></div>';
+		else
+			html = header + html;
 
 		logPanel.innerHTML = html;
 
@@ -240,29 +292,73 @@
 		word-break: break-word;
 	}
 
-	.daed-log-line {
-		margin: 0;
-		color: inherit;
+	.daed-log-table-head,
+	.daed-log-row {
+		display: grid;
+		grid-template-columns: 150px 88px minmax(0, 1fr);
+		gap: 12px;
+		align-items: start;
+	}
+
+	.daed-log-table-head {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding-bottom: 8px;
+		margin-bottom: 10px;
+		border-bottom: 1px solid rgba(127, 127, 127, 0.14);
+		background: inherit;
+		font-size: 12px;
+		font-weight: 700;
+		opacity: 0.72;
+		text-transform: none;
+	}
+
+	.daed-log-row {
+		padding: 4px 0;
+		border-bottom: 1px dashed rgba(127, 127, 127, 0.08);
+	}
+
+	.daed-log-col-time,
+	.daed-log-col-level {
+		white-space: nowrap;
+	}
+
+	.daed-log-col-content {
+		min-width: 0;
+		white-space: pre-wrap;
+		word-break: break-word;
 	}
 
 	.daed-log-level {
-		display: inline-block;
-		min-width: 42px;
-		margin: 0 6px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 52px;
+		padding: 1px 8px;
+		border-radius: 999px;
 		font-weight: 700;
 		letter-spacing: 0;
+		background: rgba(127, 127, 127, 0.10);
 	}
 
 	.daed-log-level.level-info {
 		color: #16a34a;
+		background: rgba(22, 163, 74, 0.12);
 	}
 
 	.daed-log-level.level-warn {
 		color: #d97706;
+		background: rgba(217, 119, 6, 0.12);
 	}
 
 	.daed-log-level.level-error {
 		color: #dc2626;
+		background: rgba(220, 38, 38, 0.12);
+	}
+
+	.daed-log-level.level-other {
+		opacity: 0.65;
 	}
 
 	.daed-log-empty {
