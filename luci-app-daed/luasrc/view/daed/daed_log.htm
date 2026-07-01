@@ -99,7 +99,7 @@
 				'<div class="daed-log-col-content"><%:Content%></div>' +
 			'</div>';
 
-		var html = lines.map(function(line) {
+		var rows = lines.map(function(line) {
 			var parsed = daedParseLine(line);
 			var level = parsed.level || 'OTHER';
 			var timeText = parsed.time ? daedEscapeHtml(parsed.time) : '-';
@@ -114,10 +114,12 @@
 				'</div>';
 		}).join('');
 
-		if (!html)
+		var html = '';
+
+		if (!rows)
 			html = '<div class="daed-log-empty"><%:No log entries%></div>';
 		else
-			html = header + html;
+			html = header + '<div class="daed-log-body">' + rows + '</div>';
 
 		logPanel.innerHTML = html;
 
@@ -284,7 +286,7 @@
 		background: rgba(127, 127, 127, 0.08);
 		border-radius: 8px;
 		border: 1px solid rgba(127, 127, 127, 0.14);
-		padding: 14px 16px;
+		padding: 0;
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 		font-size: 13px;
 		line-height: 1.6;
@@ -303,19 +305,24 @@
 	.daed-log-table-head {
 		position: sticky;
 		top: 0;
-		z-index: 1;
-		padding-bottom: 8px;
-		margin-bottom: 10px;
+		z-index: 2;
+		padding: 14px 16px 10px;
+		margin: 0;
 		border-bottom: 1px solid rgba(127, 127, 127, 0.14);
-		background: inherit;
+		background: var(--window-background, var(--card-background-color, #fff));
+		box-shadow: 0 1px 0 rgba(127, 127, 127, 0.08);
 		font-size: 12px;
 		font-weight: 700;
 		opacity: 0.72;
 		text-transform: none;
 	}
 
+	.daed-log-body {
+		padding: 16px 16px 14px;
+	}
+
 	.daed-log-row {
-		padding: 4px 0;
+		padding: 6px 0;
 		border-bottom: 1px dashed rgba(127, 127, 127, 0.08);
 	}
 
