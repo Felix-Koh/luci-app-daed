@@ -118,6 +118,18 @@ msgstr "启用 Geo 自动更新"
 msgid "Geo Update Hour"
 msgstr "Geo 更新时间"
 
+msgid "Restart Core"
+msgstr "重启核心"
+
+msgid "Restarting..."
+msgstr "正在重启..."
+
+msgid "Restart completed"
+msgstr "重启完成"
+
+msgid "Restart failed"
+msgstr "重启失败"
+
 msgid "DAED is not running"
 msgstr "DAED 未运行"
 

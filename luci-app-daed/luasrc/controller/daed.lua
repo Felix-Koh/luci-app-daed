@@ -18,6 +18,7 @@ function index()
 	entry({"admin", "services", "daed", "log_meta"}, call("log_meta")).leaf = true
 	entry({"admin", "services", "daed", "download_log"}, call("download_log")).leaf = true
 	entry({"admin", "services", "daed", "clear_log"}, call("clear_log")).leaf = true
+	entry({"admin", "services", "daed", "restart_core"}, call("restart_core")).leaf = true
 	entry({"admin", "services", "daed", "update_info"}, call("update_info")).leaf = true
 	entry({"admin", "services", "daed", "run_update"}, call("run_update")).leaf = true
 end
@@ -55,6 +56,16 @@ end
 
 function clear_log()
 	sys.call("true > /var/log/daed/daed.log")
+end
+
+function restart_core()
+	local rc1 = sys.call("/etc/init.d/daed restart >/dev/null 2>&1")
+	local rc2 = sys.call("/etc/init.d/luci_daed restart >/dev/null 2>&1")
+
+	http.prepare_content("application/json")
+	http.write_json({
+		ok = (rc1 == 0 and rc2 == 0)
+	})
 end
 
 local function trim(s)

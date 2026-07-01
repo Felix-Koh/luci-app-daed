@@ -1,0 +1,27 @@
+<script type="text/javascript">
+//<![CDATA[
+	function daedRestartCore(button) {
+		var statusEl = document.getElementById('daed_restart_status');
+		button.disabled = true;
+		statusEl.textContent = '<%:Restarting...%>';
+
+		XHR.get('<%=url([[admin]], [[services]], [[daed]], [[restart_core]])%>', null, function(x, data) {
+			button.disabled = false;
+			if (x && x.status == 200 && data && data.ok)
+				statusEl.textContent = '<%:Restart completed%>';
+			else
+				statusEl.textContent = '<%:Restart failed%>';
+		});
+	}
+//]]>
+</script>
+
+<div class="cbi-section-node">
+	<div class="cbi-value">
+		<label class="cbi-value-title"><%:Restart Core%></label>
+		<div class="cbi-value-field">
+			<button class="cbi-button cbi-button-apply" type="button" onclick="daedRestartCore(this)"><%:Restart Core%></button>
+			<span id="daed_restart_status" style="margin-left: 10px; opacity: 0.75;"></span>
+		</div>
+	</div>
+</div>
