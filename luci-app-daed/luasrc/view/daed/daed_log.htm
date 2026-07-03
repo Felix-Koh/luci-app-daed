@@ -29,6 +29,17 @@
 			.replace(/'/g, '&#39;');
 	}
 
+	function daedNormalizeLevel(level) {
+		var normalized = String(level || '').toUpperCase();
+
+		if (normalized === 'WARNING')
+			return 'WARN';
+		if (normalized === 'ERR')
+			return 'ERROR';
+
+		return normalized;
+	}
+
 	function daedDetectLevel(line) {
 		var parsed = daedParseLine(line);
 		if (parsed.level)
@@ -47,31 +58,31 @@
 		var m = text.match(/time="([^"]+)"\s+level=([a-zA-Z]+)\s+msg="([^"]*)"\s*(.*)$/);
 		if (m) {
 			parsed.time = m[1] || '';
-			parsed.level = (m[2] || '').toUpperCase();
+			parsed.level = daedNormalizeLevel(m[2] || '');
 			parsed.content = m[3] || '';
 			if (m[4] && m[4].trim() !== '')
 				parsed.content += '  ' + m[4].trim();
 			return parsed;
 		}
 
-		m = text.match(/^(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/);
+		m = text.match(/^((?:[A-Z][a-z]{2}\s+\d{2}\s+)?\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/);
 		if (m) {
 			parsed.time = m[1] || '';
-			parsed.level = (m[2] || '').toUpperCase();
+			parsed.level = daedNormalizeLevel(m[2] || '');
 			parsed.content = m[3] || '';
 			return parsed;
 		}
 
 		m = text.match(/\blevel=([a-zA-Z]+)\b/);
 		if (m) {
-			parsed.level = (m[1] || '').toUpperCase();
+			parsed.level = daedNormalizeLevel(m[1] || '');
 			parsed.content = text.replace(/\btime="[^"]+"\s*/, '').replace(/\blevel=[a-zA-Z]+\s*/, '').trim();
 			return parsed;
 		}
 
-		m = text.match(/\b(INFO|WARN|ERROR)\b/);
+		m = text.match(/\b(INFO|WARN(?:ING)?|ERR(?:OR)?)\b/);
 		if (m)
-			parsed.level = m[1].toUpperCase();
+			parsed.level = daedNormalizeLevel(m[1]);
 
 		return parsed;
 	}

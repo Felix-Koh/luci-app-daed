@@ -1,6 +1,6 @@
 #!/bin/sh
 
-RELEASE_REPO="${DAED_RELEASE_REPO:-QiuSimons/luci-app-daed}"
+RELEASE_REPO="${DAED_RELEASE_REPO:-kenzok8/openwrt-daede}"
 RELEASE_API_URL="${DAED_RELEASE_API_URL:-https://api.github.com/repos/${RELEASE_REPO}/releases/latest}"
 GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
 RELEASE_CACHE_DIR="${DAED_RELEASE_CACHE_DIR:-/tmp/luci-app-daed.release}"
@@ -139,12 +139,25 @@ release_payload() {
 	return 1
 }
 
-release_tag_version() {
-	release_payload | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | sed 's/^daed_//'
-}
-
 release_urls() {
 	release_payload | sed -n 's/.*"browser_download_url":[[:space:]]*"\([^"]*\)".*/\1/p'
+}
+
+asset_version() {
+	url="$1"
+	name="$(basename "$url")"
+
+	case "$name" in
+		daed_*.ipk)
+			printf '%s\n' "$name" | sed -n 's/^daed_\([^_]*\)_.*$/\1/p'
+			;;
+		daed-*.apk)
+			printf '%s\n' "$name" | sed -n 's/^daed-\(.*\)-[^-]*\.apk$/\1/p'
+			;;
+		*)
+			return 1
+			;;
+	esac
 }
 
 resolve_daed_asset() {
@@ -159,6 +172,7 @@ resolve_daed_asset() {
 		for pattern in \
 			"/daed-[^/]*-${arch}-openwrt-${sdk}\\.apk$" \
 			"/daed-[^/]*-${arch}-${sdk}\\.apk$" \
+			"/daed-[^/]*-${arch}\\.apk$" \
 			"/daed-[^/]*-openwrt-${sdk}\\.apk$" \
 			"/daed-[^/]*-${sdk}\\.apk$"
 		do
@@ -181,4 +195,14 @@ resolve_daed_asset() {
 	fi
 
 	return 1
+}
+
+release_tag_version() {
+	pm="$1"
+	arch="$2"
+	sdk="$3"
+
+	url="$(resolve_daed_asset "$pm" "$arch" "$sdk" || true)"
+	[ -n "$url" ] || return 1
+	asset_version "$url"
 }

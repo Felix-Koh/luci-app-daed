@@ -22,16 +22,16 @@ SDK="$(detect_sdk || true)"
 	exit 1
 }
 
-LATEST_VER="$(release_tag_version | head -n 1)"
-[ -n "$LATEST_VER" ] || {
-	echo "Unable to read latest release version"
-	exit 1
-}
-
 INSTALLED_VER="$(installed_version "$PM" daed || true)"
 ASSET_URL="$(resolve_daed_asset "$PM" "$ARCH" "$SDK" || true)"
 [ -n "$ASSET_URL" ] || {
 	echo "No daed package found for ${ARCH} / ${SDK}"
+	exit 1
+}
+
+LATEST_VER="$(asset_version "$ASSET_URL" | head -n 1)"
+[ -n "$LATEST_VER" ] || {
+	echo "Unable to read latest package version"
 	exit 1
 }
 
