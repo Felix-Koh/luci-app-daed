@@ -5,14 +5,11 @@ set -eu
 BASE_DIR="/usr/share/v2ray"
 [ -d "$BASE_DIR" ] || BASE_DIR="/usr/share/daed"
 mkdir -p "$BASE_DIR"
-mkdir -p "$BASE_DIR/backup"
-
-STAMP="$(date +%Y%m%d-%H%M%S)"
 UPDATED=""
 
 download_one() {
 	local kind="$1"
-	local url tmp_file target
+	local url tmp_file stage_file target rollback_file had_target=0
 
 	case "$kind" in
 		geoip) url="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" ;;
@@ -26,6 +23,9 @@ download_one() {
 	target="${BASE_DIR}/${kind}.dat"
 	tmp_file="/tmp/${kind}.dat"
 	stage_file="${tmp_file}.new"
+	rollback_file="${tmp_file}.rollback"
+
+	rm -f "$stage_file" "$rollback_file"
 
 	if command -v curl >/dev/null 2>&1; then
 		curl -fsSL "$url" -o "$stage_file"
@@ -41,11 +41,28 @@ download_one() {
 	}
 
 	if [ -f "$target" ]; then
-		cp "$target" "$BASE_DIR/backup/${kind}.dat.${STAMP}"
+		cp "$target" "$rollback_file"
+		had_target=1
 	fi
 
-	mv "$stage_file" "$target"
-	chmod 0644 "$target"
+	if ! mv "$stage_file" "$target"; then
+		if [ "$had_target" -eq 1 ] && [ -f "$rollback_file" ]; then
+			mv "$rollback_file" "$target" 2>/dev/null || cp "$rollback_file" "$target"
+		fi
+		echo "Failed to replace ${kind} at ${target}"
+		exit 1
+	fi
+
+	if ! chmod 0644 "$target"; then
+		if [ "$had_target" -eq 1 ] && [ -f "$rollback_file" ]; then
+			mv "$rollback_file" "$target" 2>/dev/null || cp "$rollback_file" "$target"
+			chmod 0644 "$target" 2>/dev/null || true
+		fi
+		echo "Failed to set permissions for ${kind} at ${target}"
+		exit 1
+	fi
+
+	rm -f "$rollback_file"
 	UPDATED="${UPDATED}${kind} "
 	echo "Updated ${kind} at ${target}"
 }
