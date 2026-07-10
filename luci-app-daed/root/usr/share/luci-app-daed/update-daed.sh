@@ -37,6 +37,7 @@ LATEST_VER="$(asset_version "$ASSET_URL" | head -n 1)"
 
 TMP_EXT="$(asset_ext "$PM")"
 TMP_FILE="/tmp/daed-update.${TMP_EXT}"
+trap 'rm -f "$TMP_FILE"' EXIT
 
 echo "Installed version: ${INSTALLED_VER:-not installed}"
 echo "Latest version: ${LATEST_VER}"
